@@ -1,7 +1,11 @@
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase/client';
+import { uploadProfileImage } from '@/lib/supabase/storage';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OnBoardingScreen() {
@@ -9,6 +13,9 @@ export default function OnBoardingScreen() {
   const [username, setUsername] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { user, updateUser } = useAuth();
+  const router = useRouter();
 
   const showImagePickerOptions = () => {
     Alert.alert(
@@ -74,7 +81,7 @@ export default function OnBoardingScreen() {
     }
   }
 
-  const handleOnboarding = () => {
+  const handleOnboarding = async () => {
     if (!name || !username) {
       Alert.alert("Error", "Please fill in all fields");
       return;
@@ -88,6 +95,41 @@ export default function OnBoardingScreen() {
     setIsLoading(true);
     try {
       // TODO: Complete onboarding
+      if (!user) {
+        Alert.alert("Error", "User not found");
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if user exists
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .neq('id', user.id)
+        .single();
+      
+      if (userProfile) {
+        Alert.alert("Error", "The user already exists");
+        setIsLoading(false);
+        return;
+      }
+
+      let profileImageUrl: string | undefined; 
+
+      // Upload profile image
+      if (profileImage) {
+        profileImageUrl = await uploadProfileImage(user?.id, profileImage);
+      }
+
+      // Update Profile
+      await updateUser({
+        name,
+        username,
+        profileImage: profileImageUrl,
+        onBoardingCompleted: true
+      });
+      router.replace("/(tabs)");
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Failed to complete onboarding. Please try again");    
@@ -143,7 +185,11 @@ export default function OnBoardingScreen() {
           />
 
           <TouchableOpacity style={styles.button} onPress={handleOnboarding}>
-            <Text style={styles.buttonText}>Complete Profile</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Complete Profile</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

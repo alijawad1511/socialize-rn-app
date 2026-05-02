@@ -1,14 +1,17 @@
+import { useAuth } from "@/context/AuthContext";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function Index() {
   const router = useRouter();
+  const { user } = useAuth();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to Socialize</Text>
       <Image source={
-        { uri: 'https://avatars.githubusercontent.com/u/85053422?v=4' }
+        { uri: user?.profileImage }
       } style={styles.image} />
       <TextInput placeholder="Enter your name" style={styles.input} />
       <ActivityIndicator size="large" />

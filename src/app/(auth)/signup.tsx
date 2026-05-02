@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -11,10 +11,6 @@ export default function SignUpScreen() {
   const router = useRouter();
   const { signUp } = useAuth();
 
-  useEffect(() => {
-    router.push("/(auth)/onboarding");
-  },[])
-
   const handleSignUp = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
@@ -22,13 +18,14 @@ export default function SignUpScreen() {
     }
 
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 3 characters long");
+      Alert.alert("Error", "Password must be at least 6 characters long");
       return;
     }
     
     setIsLoading(true);
     try {
       await signUp(email, password);
+      router.push("/(auth)/onboarding");
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Failed to sign up. Please try again");    
@@ -64,15 +61,15 @@ export default function SignUpScreen() {
             onChangeText={setPassword}
           />
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.linkButton} onPress={() => router.push("/(auth)/login")}>
             {isLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.linkButtonText}>Already have an account? <Text style={styles.linkButtonTextBold}>Sign In</Text></Text>
+              <Text style={styles.buttonText}>Sign Up</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.linkButton} onPress={() => router.push("/(auth)/login")}>
+            <Text style={styles.linkButtonText}>Already have an account? <Text style={styles.linkButtonTextBold}>Sign In</Text></Text>
           </TouchableOpacity>
         </View>
       </View>
