@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 export interface User {
   id: string;
@@ -22,6 +22,27 @@ const AuthContext = createContext<AuthContext | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  useEffect(() => {
+    checkSession();
+   }, []);
+
+   const checkSession = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id);
+        setUser(profile);
+      } else {
+        console.log('No session found');
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking session:', error);
+      setUser(null);
+    }
+  }
+  
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
     try {
       const { data, error } = await supabase
@@ -122,7 +143,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw error;
     }
   }
-
 
   return <AuthContext.Provider value={{ user, login, signUp, updateUser }}>{ children }</AuthContext.Provider>
 }
