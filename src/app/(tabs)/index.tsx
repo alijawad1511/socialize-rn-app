@@ -1,3 +1,4 @@
+import { usePost } from '@/hooks/usePost';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from "react";
@@ -8,6 +9,9 @@ export default function Index() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [description, setDescription] = useState<string>('');
+  const [isUploadng, setIsUploadng] = useState(false);
+
+  const { createPost } = usePost();
 
   const showImagePickerOptions = () => {
     Alert.alert(
@@ -74,6 +78,23 @@ export default function Index() {
     }
   }
 
+  const handlePost = async () => {
+    if (!previewImage) return;
+    setIsUploadng(true);
+
+    try {
+      await createPost(previewImage, description);
+      setShowPreview(false);
+      setPreviewImage(null);
+      setDescription('');
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "Failed to create post. Please try again");
+    } finally {
+      setIsUploadng(false);
+    }
+  }
+
   return (
     <SafeAreaView
       edges={["top", "bottom"]}
@@ -110,7 +131,7 @@ export default function Index() {
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.postButton, styles.modalButton]}>
+              <TouchableOpacity style={[styles.postButton, styles.modalButton]} onPress={handlePost}>
                 <Text style={styles.postButtonText}>Post</Text>
               </TouchableOpacity>
             </View>
